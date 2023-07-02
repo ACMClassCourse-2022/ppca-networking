@@ -1,0 +1,4 @@
+mkns ns1
+mkns ns2
+mkveth default veth0 10.0.0.1/24 ns1 veth0 10.0.0.2/24
+mkveth ns1 veth1 10.0.1.1/24 ns2 veth0 10.0.1.2/24

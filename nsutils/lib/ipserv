@@ -1,0 +1,10 @@
+#!/usr/bin/env python3
+import socket
+s = socket.create_server(('', 20080), family=socket.AF_INET6, dualstack_ipv6=True)
+while True:
+    (c, addr) = s.accept()
+    addr = addr[0]
+    if addr.startswith('::ffff:'):
+        addr = addr.replace('::ffff:', '')
+    c.sendall(addr.encode() + b'\n')
+    c.close()

@@ -1,0 +1,52 @@
+#!/bin/bash
+
+set -e
+
+IFS=''
+NETNS_PREFIX="/tmp/netns"
+LIB_BASE="$(dirname "$0")"
+
+mkdir -p $NETNS_PREFIX
+mount -t tmpfs tmpfs $NETNS_PREFIX
+mkdir $NETNS_PREFIX/ns
+touch $NETNS_PREFIX/ns/default
+mount --bind /proc/self/ns/net $NETNS_PREFIX/ns/default
+ip link set lo up
+
+touch $NETNS_PREFIX/profile
+chmod +x $NETNS_PREFIX/profile
+cp /etc/profile $NETNS_PREFIX/profile
+echo >> $NETNS_PREFIX/profile
+echo ". \"$LIB_BASE/env\"" >> $NETNS_PREFIX/profile
+mount --bind $NETNS_PREFIX/profile /etc/profile
+
+function auto_initns () {
+  file="$1"
+  if [ -e "$file" ]; then
+    tmp="$(mktemp -p $NETNS_PREFIX)"
+    cp "$file" "$tmp"
+    chmod +x "$tmp"
+    echo >> "$tmp"
+    echo "initns" >> "$tmp"
+    mount --bind "$tmp" "$file"
+  fi
+}
+auto_initns ~/.bashrc
+auto_initns ~/.zshrc
+
+mkdir $NETNS_PREFIX/bin
+cp "$LIB_BASE"/{mkns.c,nsexec.c,ipserv} $NETNS_PREFIX/bin
+chmod +x $NETNS_PREFIX/bin/ipserv
+make -s $NETNS_PREFIX/bin/{mkns,nsexec}
+
+$NETNS_PREFIX/bin/ipserv &
+
+SHELL=${SHELL:=/bin/bash}
+
+if [ ! -z "$1" ]; then
+  (echo "set -e"; echo ". \"$LIB_BASE/env\""; cat "$1") | $SHELL
+fi
+
+$SHELL -l
+
+pkill --ns $$ --nslist mnt -A

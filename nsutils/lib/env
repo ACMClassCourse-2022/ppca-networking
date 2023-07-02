@@ -1,0 +1,61 @@
+export PATH="/tmp/netns/bin:$PATH"
+export NETNS_NS_DIR="/tmp/netns/ns"
+
+function lsns () {
+  ls "$NETNS_NS_DIR"
+}
+function pns () {
+  IFS=$'\n'
+  curr_id="$(readlink /proc/self/ns/net)"
+  for nsname in $(lsns); do
+    nsid="net:[$(ls -i "$NETNS_NS_DIR/$nsname" | awk '{ print $1 }')]"
+    if [ "$curr_id" = "$nsid" ]; then
+      echo $nsname
+    fi
+  done
+}
+function mkveth () {
+  if [ -z "$6" ]; then
+    echo "Usage: mkveth [netns1] [devname1] [ip1] [netns2] [devname2] [ip2]" >&2
+    return 1
+  fi
+  ns1="$1"
+  dev1="$2"
+  ip1="$3"
+  ns2="$4"
+  dev2="$5"
+  ip2="$6"
+  ip link add "$dev1" netns "$NETNS_NS_DIR/$ns1" type veth peer name "$dev2" netns "$NETNS_NS_DIR/$ns2" && \
+  nsexec "$ns1" ip link set "$dev1" up && \
+  nsexec "$ns2" ip link set "$dev2" up && \
+  nsexec "$ns1" ip a add "$ip1" dev "$dev1" peer "$ip2" && \
+  nsexec "$ns2" ip a add "$ip2" dev "$dev2" peer "$ip1"
+}
+
+function setns () {
+  if [ ! -e "$NETNS_NS_DIR/$1" ]; then
+    echo "namespace $1 not found" >&2
+    return 1
+  fi
+  exec nsexec "$1"
+}
+
+function _netns_update_ps1 () {
+  prefix="(net $(pns))"
+  if echo "$PS1" | grep -F "$prefix" > /dev/null; then true; else
+    export PS1="$prefix $PS1"
+  fi
+}
+_netns_update_ps1
+
+function initns () {
+  _netns_update_ps1
+  if echo $SHELL | grep zsh > /dev/null; then
+    if [ -z "$_nsinited" ]; then
+      _nsinited=1
+      precmd_functions+=("_netns_update_ps1")
+    fi
+  fi
+}
+
+_netns=1

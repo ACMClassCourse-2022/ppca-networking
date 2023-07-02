@@ -1,0 +1,4 @@
+#!/bin/bash
+
+IFS=''
+exec unshare -cnm --keep-caps "$(dirname "$0")/lib/nsentry" $@
