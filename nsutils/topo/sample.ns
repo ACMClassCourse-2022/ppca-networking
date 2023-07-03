@@ -1,4 +1,20 @@
 mkns ns1
 mkns ns2
-mkveth default veth0 10.0.0.1/24 ns1 veth0 10.0.0.2/24
-mkveth ns1 veth1 10.0.1.1/24 ns2 veth0 10.0.1.2/24
+
+ns-add-hosts 10.0.1.1 net1.default.test
+ns-add-hosts 10.0.1.2 net1.ns1.test
+ns-add-hosts 10.0.2.1 net2.ns1.test
+ns-add-hosts 10.0.2.2 net2.ns2.test
+
+ns-add-hosts $ipv6_ula:1::1 net1.v6.default.test
+ns-add-hosts $ipv6_ula:1::2 net1.v6.ns1.test
+ns-add-hosts $ipv6_ula:2::1 net2.v6.ns1.test
+ns-add-hosts $ipv6_ula:2::2 net2.v6.ns2.test
+
+mkveth default veth0 10.0.1.1/24 ns1 veth0 10.0.1.2/24
+ns-addip default veth0 $ipv6_ula:1::1/64 ns1 veth0 $ipv6_ula:1::2/64
+mkveth ns1 veth1 10.0.2.1/24 ns2 veth0 10.0.2.2/24
+ns-addip ns1 veth1 $ipv6_ula:2::1/64 ns2 veth0 $ipv6_ula:2::2/64
+
+# Wait until IPv6 routing is online
+until ping -c 1 -W 0.1 net1.v6.ns1.test > /dev/null; do sleep .1; done

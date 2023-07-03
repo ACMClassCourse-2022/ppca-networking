@@ -1,0 +1,20 @@
+export PORT=8080
+
+ns-load-topo sample.ns
+ns-source ns1 "$NETNS_SRC_BASE/start-proxy"
+
+# ipv4
+expect "$(timeout 1 nc -X 5 -x 10.0.1.2:$PORT 10.0.2.2 $IPSERV_PORT < /dev/null)" "10.0.2.1"
+expect "$(timeout 1 nsexec ns2 nc -X 5 -x 10.0.2.1:$PORT 10.0.1.1 $IPSERV_PORT < /dev/null)" "10.0.1.2"
+
+# ipv6
+expect "$(timeout 1 nc -X 5 -x "[$ipv6_ula:1::2]:$PORT" $ipv6_ula:2::2 $IPSERV_PORT < /dev/null)" "$ipv6_ula:2::1"
+expect "$(timeout 1 nsexec ns2 nc -X 5 -x "[$ipv6_ula:2::1]:$PORT" $ipv6_ula:1::1 $IPSERV_PORT < /dev/null)" "$ipv6_ula:1::2"
+
+# ipv4 dns
+expect "$(timeout 1 nc -X 5 -x net1.ns1.test:$PORT net2.ns2.test $IPSERV_PORT < /dev/null)" "10.0.2.1"
+expect "$(timeout 1 nsexec ns2 nc -X 5 -x net2.ns1.test:$PORT net1.default.test $IPSERV_PORT < /dev/null)" "10.0.1.2"
+
+# ipv6 dns
+expect "$(timeout 1 nc -X 5 -x net1.v6.ns1.test:$PORT net2.v6.ns2.test $IPSERV_PORT < /dev/null)" "$ipv6_ula:2::1"
+expect "$(timeout 1 nsexec ns2 nc -X 5 -x net2.v6.ns1.test:$PORT net1.v6.default.test $IPSERV_PORT < /dev/null)" "$ipv6_ula:1::2"

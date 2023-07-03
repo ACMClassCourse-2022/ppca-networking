@@ -1,5 +1,7 @@
-export PATH="/tmp/netns/bin:$PATH"
-export NETNS_NS_DIR="/tmp/netns/ns"
+export PATH="$NETNS_PREFIX/bin:$PATH"
+export NETNS_NS_DIR="$NETNS_PREFIX/ns"
+export IPSERV_PORT=20080
+export ipv6_ula=fdb8:274b:4092
 
 function lsns () {
   ls "$NETNS_NS_DIR"
@@ -13,6 +15,16 @@ function pns () {
       echo $nsname
     fi
   done
+}
+function ns-addip () {
+  ns1="$1"
+  dev1="$2"
+  ip1="$3"
+  ns2="$4"
+  dev2="$5"
+  ip2="$6"
+  nsexec "$ns1" ip a add "$ip1" dev "$dev1" peer "$ip2" && \
+  nsexec "$ns2" ip a add "$ip2" dev "$dev2" peer "$ip1"
 }
 function mkveth () {
   if [ -z "$6" ]; then
@@ -28,8 +40,10 @@ function mkveth () {
   ip link add "$dev1" netns "$NETNS_NS_DIR/$ns1" type veth peer name "$dev2" netns "$NETNS_NS_DIR/$ns2" && \
   nsexec "$ns1" ip link set "$dev1" up && \
   nsexec "$ns2" ip link set "$dev2" up && \
-  nsexec "$ns1" ip a add "$ip1" dev "$dev1" peer "$ip2" && \
-  nsexec "$ns2" ip a add "$ip2" dev "$dev2" peer "$ip1"
+  ns-addip "$ns1" "$dev1" "$ip1" "$ns2" "$dev2" "$ip2"
+}
+function ns-add-hosts () {
+  echo $@ >> $NETNS_PREFIX/hosts
 }
 
 function setns () {
@@ -39,6 +53,20 @@ function setns () {
   fi
   exec nsexec "$1"
 }
+
+function ns-source () {
+  (echo "set -e"; echo ". \"$NETNS_PREFIX/env\""; cat "$2") | nsexec $1
+}
+function ns-load-topo () {
+  ns-source "$(pns)" "$NETNS_SRC_BASE/topo/$1"
+}
+function expect () {
+  if [ "$1" != "$2" ]; then
+    printf "Test failed: expected %q, got %q.\n" "$2" "$1"
+    exit 1
+  fi
+}
+
 
 function _netns_update_ps1 () {
   prefix="(net $(pns))"
