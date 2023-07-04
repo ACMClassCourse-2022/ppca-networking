@@ -43,18 +43,28 @@ auto_initns ~/.bashrc
 auto_initns ~/.zshrc
 
 mkdir $NETNS_PREFIX/bin
-cp "$NETNS_SRC_BASE"/lib/{mkns.c,nsexec.c,ipserv} $NETNS_PREFIX/bin
+cp "$NETNS_SRC_BASE"/lib/{mkns.c,nsexec.c,testdrv.c,ipserv} $NETNS_PREFIX/bin
 chmod +x $NETNS_PREFIX/bin/ipserv
-make -s $NETNS_PREFIX/bin/{mkns,nsexec}
+make -s $NETNS_PREFIX/bin/{mkns,nsexec,testdrv}
 
 $NETNS_PREFIX/bin/ipserv &
 
 SHELL=${SHELL:=/bin/bash}
 
+function cleanup () {
+  pkill --ns $$ --nslist mnt -A
+  exit $ret
+}
+
+set +e
+
 if [ ! -z "$1" ]; then
   (echo "set -e"; echo ". \"$NETNS_PREFIX/env\""; cat "$1") | bash
+  ret=$?
+  if [ $ret != 0 ]; then cleanup; fi
 fi
 
 $SHELL -l
+ret=$?
 
-pkill --ns $$ --nslist mnt -A
+cleanup

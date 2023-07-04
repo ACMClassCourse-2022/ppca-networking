@@ -1,0 +1,8 @@
+export PORT=8080
+
+ns-source default "$NETNS_SRC_BASE/start-proxy"
+
+for i in "$NETNS_SRC_BASE"/tests/base/errors/*; do
+  echo "$(basename "$i")"
+  timeout 10 testdrv localhost $PORT < $i
+done
