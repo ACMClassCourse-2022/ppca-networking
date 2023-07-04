@@ -1,0 +1,10 @@
+export PORT=8080
+
+ns-source default "$NETNS_SRC_BASE/start-proxy"
+timeout 10 testdrv localhost $PORT << EOF
+64
+send 4 5 2 1 0
+recv 2 5 0
+send 16 5 1 0 3 9 108 111 99 97 108 104 111 115 116 78 112
+recv 2 5 0
+EOF

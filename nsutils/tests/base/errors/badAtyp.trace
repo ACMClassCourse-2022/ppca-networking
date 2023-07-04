@@ -1,4 +1,5 @@
-send 4 5 2 0 1
+1
+send 4 5 2 1 0
 recv 2 5 0
 send 6 5 1 0 233 38 82
 recv 2 5 8
