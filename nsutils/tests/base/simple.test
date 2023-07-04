@@ -7,6 +7,10 @@ ns-source ns1 "$NETNS_SRC_BASE/start-proxy"
 expect "$(timeout 1 nc -X 5 -x 10.0.1.2:$PORT 10.0.2.2 $IPSERV_PORT < /dev/null)" "10.0.2.1"
 expect "$(timeout 1 nsexec ns2 nc -X 5 -x 10.0.2.1:$PORT 10.0.1.1 $IPSERV_PORT < /dev/null)" "10.0.1.2"
 
+# ipv4 mapped ipv6
+expect "$(timeout 1 nc -X 5 -x 10.0.1.2:$PORT ::ffff:10.0.2.2 $IPSERV_PORT < /dev/null)" "10.0.2.1"
+expect "$(timeout 1 nsexec ns2 nc -X 5 -x 10.0.2.1:$PORT ::ffff:10.0.1.1 $IPSERV_PORT < /dev/null)" "10.0.1.2"
+
 # ipv6
 expect "$(timeout 1 nc -X 5 -x "[$ipv6_ula:1::2]:$PORT" $ipv6_ula:2::2 $IPSERV_PORT < /dev/null)" "$ipv6_ula:2::1"
 expect "$(timeout 1 nsexec ns2 nc -X 5 -x "[$ipv6_ula:2::1]:$PORT" $ipv6_ula:1::1 $IPSERV_PORT < /dev/null)" "$ipv6_ula:1::2"
