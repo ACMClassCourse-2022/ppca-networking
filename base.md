@@ -16,7 +16,7 @@ all_proxy=socks5h://localhost:8080 curl example.com
 
 ## 评测
 
-评测方法待定。助教正在出测试点。
+评测方式见 [评测文档](testing.md)。本任务对应的测试点位于 tests/base 目录中。(测试点还没有出完。)
 
 ## 时间要求
 
