@@ -1,9 +1,12 @@
 #define _GNU_SOURCE
+#include <fcntl.h>
 #include <sched.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mount.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 void check (int res, const char *msg) {
