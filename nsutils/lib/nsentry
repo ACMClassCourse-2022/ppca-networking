@@ -52,7 +52,7 @@ $NETNS_PREFIX/bin/ipserv &
 SHELL=${SHELL:=/bin/bash}
 
 function cleanup () {
-  pkill --ns $$ --nslist mnt -A
+  pgrep --ns $$ --nslist mnt | grep -v $$ | xargs kill -9 > /dev/null 2>&1
   exit $ret
 }
 
