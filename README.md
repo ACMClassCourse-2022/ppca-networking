@@ -13,7 +13,7 @@
 - [透明代理](tun.md) 4’
 - [代理客户端](client.md) 1’
   - [分流规则](rules.md)
-    - [按 IP 分流](rules-ip.md) 1’
+    - [按 socks 地址分流](rules-ip.md) 1’
     - 按域名分流
       - [HTTP 分流](rules-http.md) 1’
       - [TLS 分流](rules-tls.md) 1’
